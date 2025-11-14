@@ -1,0 +1,41 @@
+/* 월 보기 셀 높이 확대 (이벤트 여유 공간 확보) */
+.rbc-month-row {
+  min-height: 120px !important;
+}
+
+/* 이벤트 목록 영역에만 overflow visible 적용 (toolbar에는 영향 X) */
+.rbc-month-view .rbc-row-content {
+  overflow: visible !important;
+}
+
+/* 이벤트 스타일 */
+.rbc-event {
+  font-size: 12px !important;
+  line-height: 1.4;
+  border-radius: 6px;
+  padding: 2px 6px !important;
+  margin-bottom: 2px !important;
+  height: auto !important;
+  max-height: none !important;
+  white-space: nowrap;
+}
+
+/* === 캘린더 헤더 중앙 정렬 및 버튼 클릭 버그 완전 해결 === */
+.rbc-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+/* 월 제목 중앙정렬 */
+.rbc-toolbar-label {
+  position: absolute; /* 중앙 위치 고정 */
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  flex: 0 0 auto;
+  pointer-events: none; /*  클릭 차단 방지 */
+  margin: 0 !important; /* 이전 margin-left 제거 */
+  padding: 0 10px;
+}

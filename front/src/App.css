@@ -1,0 +1,198 @@
+html,
+body {
+  padding: 0;
+  margin: 0;
+  /* background-color: var(--bg-main-color); */
+}
+
+.slick-dots {
+  bottom: 16px !important;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  position: absolute !important;
+  text-align: center;
+  z-index: 2;
+}
+
+/* :root {
+  
+  --header-height: 100px;
+  --nav-height: 50px;
+  --footer-height: 100px;
+  --aside-height: calc(
+    100vh - (var(--header-height) + var(--nav-height) + var(--footer-height))
+  );
+  --aside-width: 150px;
+} */
+
+/* ========== jelly ========== */
+.jelly:hover {
+  animation: jelly 0.6s ease forwards;
+}
+
+@keyframes jelly {
+  0% {
+    transform: scale(1, 1);
+  }
+  25% {
+    transform: scale(1.25, 0.75);
+  }
+  50% {
+    transform: scale(0.75, 1.25);
+  }
+  75% {
+    transform: scale(1.15, 0.85);
+  }
+  100% {
+    transform: scale(1, 1);
+  }
+}
+
+/* ========== neon ========== */
+
+.neon-red {
+  animation: neon-red 1.5s ease-in-out infinite alternate;
+}
+.neon-blue {
+  animation: neon-blue 1.5s ease-in-out infinite alternate;
+}
+.neon-yellow {
+  animation: neon-yellow 1.5s ease-in-out infinite alternate;
+}
+.neon-green {
+  animation: neon-green 1.5s ease-in-out infinite alternate;
+}
+.neon-orange {
+  animation: neon-orange 1.5s ease-in-out infinite alternate;
+}
+.neon-violet {
+  animation: neon-violet 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes neon-red {
+  from {
+    text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #ff1177,
+      0 0 70px #ff1177, 0 0 80px #ff1177, 0 0 100px #ff1177, 0 0 150px #ff1177;
+  }
+  to {
+    text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #ff1177,
+      0 0 35px #ff1177, 0 0 40px #ff1177, 0 0 50px #ff1177, 0 0 75px #ff1177;
+  }
+}
+
+@keyframes neon-blue {
+  from {
+    text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #228dff,
+      0 0 70px #228dff, 0 0 80px #228dff, 0 0 100px #228dff, 0 0 150px #228dff;
+  }
+  to {
+    text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #228dff,
+      0 0 35px #228dff, 0 0 40px #228dff, 0 0 50px #228dff, 0 0 75px #228dff;
+  }
+}
+
+@keyframes neon-yellow {
+  from {
+    text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #ffdd1b,
+      0 0 70px #ffdd1b, 0 0 80px #ffdd1b, 0 0 100px #ffdd1b, 0 0 150px #ffdd1b;
+  }
+  to {
+    text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #ffdd1b,
+      0 0 35px #ffdd1b, 0 0 40px #ffdd1b, 0 0 50px #ffdd1b, 0 0 75px #ffdd1b;
+  }
+}
+
+@keyframes neon-green {
+  from {
+    text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #b6ff00,
+      0 0 70px #b6ff00, 0 0 80px #b6ff00, 0 0 100px #b6ff00, 0 0 150px #b6ff00;
+  }
+  to {
+    text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #b6ff00,
+      0 0 35px #b6ff00, 0 0 40px #b6ff00, 0 0 50px #b6ff00, 0 0 75px #b6ff00;
+  }
+}
+
+@keyframes neon-orange {
+  from {
+    text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #ff9900,
+      0 0 70px #ff9900, 0 0 80px #ff9900, 0 0 100px #ff9900, 0 0 150px #ff9900;
+  }
+  to {
+    text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #ff9900,
+      0 0 35px #ff9900, 0 0 40px #ff9900, 0 0 50px #ff9900, 0 0 75px #ff9900;
+  }
+}
+
+@keyframes neon-violet {
+  from {
+    text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #ff00de,
+      0 0 70px #ff00de, 0 0 80px #ff00de, 0 0 100px #ff00de, 0 0 150px #ff00de;
+  }
+  to {
+    text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #ff00de,
+      0 0 35px #ff00de, 0 0 40px #ff00de, 0 0 50px #ff00de, 0 0 75px #ff00de;
+  }
+}
+
+/* ========== glowing ========== */
+
+.glow {
+  padding: 0px 100px;
+  display: inline-block;
+  color: aqua;
+  text-decoration: none;
+  transition: 0.5s;
+}
+
+.glow:hover {
+  letter-spacing: 10px;
+  background: aqua;
+  color: black;
+  border-bottom: 3px solid rgba(37, 179, 179, 0.294);
+  box-shadow: 0 0 5px aqua, 0 0 25px aqua, 0 0 50px aqua, 0 0 200px aqua;
+  -webkit-box-reflect: below 1px linear-gradient(transparent, #0005);
+}
+
+/* ========== jelly-box + jelly-box-shadow (형제레벨로 2개 같이 사용) ========== */
+.jelly-box {
+  width: 50px;
+  height: 50px;
+  background: white;
+  animation: jelly-box-animation 0.5s linear infinite;
+  border-radius: 3px;
+}
+
+.jelly-box:hover {
+  animation-play-state: paused;
+}
+
+.jelly-box-shadow {
+  width: 50px;
+  height: 5px;
+  background: black;
+  opacity: 0.1;
+  position: relative;
+  top: 11px;
+  border-radius: 50%;
+}
+
+@keyframes jelly-box-animation {
+  17% {
+    border-bottom-right-radius: 3px;
+  }
+  25% {
+    transform: translateY(9px) rotate(22.5deg);
+  }
+  50% {
+    transform: translateY(18px) scale(1, 0.9) rotate(45deg);
+    border-bottom-right-radius: 40px;
+  }
+  75% {
+    transform: translateY(9px) rotate(67.5deg);
+  }
+  100% {
+    transform: translateY(0) rotate(90deg);
+  }
+}
