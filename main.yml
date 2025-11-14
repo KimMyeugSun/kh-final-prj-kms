@@ -1,0 +1,214 @@
+name: team119.jar_CICD_setup
+
+on:
+  push:
+    branches:
+      - release
+
+# 동시 실행 방지
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # 프론트엔드 빌드 및 S3 배포
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      # 저장소의 코드를 Runner에 복사
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Node.js 설정
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'front/package-lock.json'
+
+      # 프론트엔드 의존성 설치
+      - name: Install Dependencies
+        run: |
+          cd front
+          npm ci
+
+      # 프론트엔드 빌드
+      - name: Build Frontend
+        run: |
+          cd front
+          npm run build
+      
+      # AWS 자격 증명 구성
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.S3_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.S3_SECRET_KEY }}
+          aws-region: ap-northeast-2
+
+      #빌드 파일 s3 배포 (변경된 파일만, 삭제된 파일 s3에서 제외)
+      - name: Deploy to S3
+        run: |
+          aws s3 sync front/dist/ s3://${{ secrets.S3_BUCKET_NAME }} --region ap-northeast-2 --delete
+
+      #캐시 무효화
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+
+  # 백엔드 빌드 및 Docker 이미지 생성/푸시
+  build-backend:  
+    runs-on: ubuntu-latest
+    steps:
+      # 저장소의 코드를 Runner에 복사
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Set up JDK for Gradle
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17' 
+          distribution: 'zulu'
+
+      # - name: Cache Gradle Dependencies
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: ~/.gradle/caches
+      #     key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-gradle-
+
+
+      # Build the jar using Gradle bootJar
+      - name: Build with bootJar
+        run: |
+          cd team119
+          chmod +x ./gradlew
+          ./gradlew clean bootJar
+          echo "=== Build Success ==="
+          ls -la build/libs/
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_ID }}
+          password: ${{ secrets.DOCKER_HUB_PWD }}
+
+      - name: Build Docker Image with Dockerfile
+        run: |
+          docker build -t ${{ secrets.DOCKER_HUB_ID }}/team119app:latest ./team119
+      
+      - name: Push Docker Image
+        run: |
+          docker push ${{ secrets.DOCKER_HUB_ID }}/team119app:latest
+
+  # 배포 (환경변수 주입 방식)
+  deploy:
+    needs: [build-frontend, build-backend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_IP }}
+          key: ${{ secrets.EC2_KEY }}
+          username: ubuntu
+          port: 22
+          command_timeout: 10m
+          script: |
+            #!/bin/bash
+            set -e
+            
+            echo "=== Starting deployment process ==="
+            
+            # 포트 8080 사용 프로세스 강제 종료
+            sudo lsof -ti:8080 | xargs -r sudo kill -9 || echo "No processes using port 8080"
+            
+            # 기존 컨테이너 완전 정리
+            sudo docker stop team119_was 2>/dev/null || echo "No container to stop"
+            sudo docker rm team119_was 2>/dev/null || echo "No container to remove"
+            sudo docker rmi devyoon2199/team119app:latest 2>/dev/null || echo "No image to remove"
+            
+            # Docker 시스템 정리
+            sudo docker system prune -f
+            
+            # 최신 이미지 pull
+            echo "=== Pulling latest image ==="
+            sudo docker pull devyoon2199/team119app:latest
+            
+            # 환경변수 확인
+            echo "=== Environment Variables Check ==="
+            echo "SPRING_PROFILES_ACTIVE will be: prod"
+            
+            # 새 컨테이너 실행 (수정된 설정)
+            echo "=== Starting new container ==="
+            sudo docker run -d --name team119_was -p 8080:8080 \
+              --restart unless-stopped \
+              --health-cmd="curl -f http://localhost:8080/actuator/health || exit 1" \
+              --health-interval=30s \
+              --health-timeout=10s \
+              --health-retries=3 \
+              -e JAVA_TOOL_OPTIONS="-XX:+UnlockExperimentalVMOptions -XX:-UseContainerSupport" \
+              -e SPRING_PROFILES_ACTIVE="prod" \
+              -e JWT_SECRET_KEY="${{ secrets.JWT_SECRET_KEY }}" \
+              -e KAKAO_REST_KEY="${{ secrets.KAKAO_REST_KEY }}" \
+              -e SEOUL_PUBLIC_DATA_API_KEY="${{ secrets.SEOUL_PUBLIC_DATA_API_KEY }}" \
+              -e AWS_S3_BUCKET="${{ secrets.AWS_S3_BUCKET }}" \
+              -e AWS_REGION="${{ secrets.AWS_REGION }}" \
+              -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
+              -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
+              -e DB_USERNAME="${{ secrets.DB_USERNAME }}" \
+              -e DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+              devyoon2199/team119app:latest
+            
+            # 컨테이너 시작 대기
+            echo "=== Waiting for container startup ==="
+            sleep 30
+            
+            # 컨테이너 상태 확인
+            echo "=== Container Status ==="
+            if sudo docker ps | grep -q team119_was; then
+              echo "✅ Container is running"
+              sudo docker ps | grep team119_was
+            else
+              echo "❌ Container failed to start"
+              sudo docker logs team119_was --tail 30
+              exit 1
+            fi
+            
+            # 환경변수 확인
+            echo "=== Environment Variables in Container ==="
+            sudo docker exec team119_was printenv | grep -E "(SPRING_PROFILES_ACTIVE|DB_USERNAME)" || true
+            
+            # 헬스 체크
+            echo "=== Health Check ==="
+            HEALTH_SUCCESS=false
+            for i in {1..8}; do
+              echo "Health check attempt $i/8..."
+              if timeout 15 curl -f http://localhost:8080/actuator/health; then
+                echo "✅ Application is healthy! (attempt $i)"
+                HEALTH_SUCCESS=true
+                break
+              else
+                echo "⏳ Application not ready, checking logs..."
+                sudo docker logs team119_was --tail 10 | grep -E "(ERROR|Exception)" || echo "No errors in recent logs"
+                sleep 15
+              fi
+            done
+            
+            # 최종 결과
+            if [ "$HEALTH_SUCCESS" = true ]; then
+              echo "🎉 Deployment completed successfully!"
+            else
+              echo "❌ Deployment failed - Application not responding"
+              echo "=== Full Container Logs ==="
+              sudo docker logs team119_was --tail 50
+              echo "=== Container Status ==="
+              sudo docker ps -a | grep team119_was
+              exit 1
+            fi
